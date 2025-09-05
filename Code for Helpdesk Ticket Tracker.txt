@@ -1,0 +1,316 @@
+switch case for tables and operations
+package helpdesk;
+import java.sql.*;
+import java.util.Scanner;
+public class DB {
+ static final String jdbcUrl = "jdbc:oracle:thin:@LAPTOP-ASI46IKP:1521/XE";
+    static final String username = "shobika";
+    static final String password = "shobi123";
+public static void main(String[] args) {
+        DB db = new DB();
+        Scanner scanner = new Scanner(System.in);
+while (true) {
+            System.out.println("\n=== MAIN MENU ===");
+            System.out.println("1. Users");
+            System.out.println("2. Tickets");
+            System.out.println("3. Departments");
+            System.out.println("4. Ticket Comments");
+            System.out.println("5. Ticket Assignments");
+            System.out.println("6. Exit");
+            System.out.print("Select a table (1-6): ");
+            int tableChoice = scanner.nextInt();
+            scanner.nextLine(); // consume newline
+            if (tableChoice == 6) {
+                System.out.println("Exiting...");
+                break;
+            }
+            System.out.println("\n--- Choose Operation ---");
+            System.out.println("a. Insert");
+            System.out.println("b. Update");
+            System.out.println("c. Delete");
+            System.out.println("d. View");
+            System.out.print("Enter your choice: ");
+            String op = scanner.nextLine().toLowerCase();
+            switch (tableChoice) {
+                case 1 -> db.performUserOperation(op, scanner);
+                case 2 -> db.performTicketOperation(op, scanner);
+                case 3 -> db.performDepartmentOperation(op, scanner);
+                case 4 -> db.performCommentOperation(op, scanner);
+                case 5 -> db.performAssignmentOperation(op, scanner);
+                default -> System.out.println("Invalid table choice.");
+            }
+        }
+        scanner.close();
+    }
+    public void performUserOperation(String op, Scanner sc) {
+        switch (op) {
+            case "a" -> insertUser(sc);
+            case "b" -> updateUser(sc);
+            case "c" -> deleteUser(sc);
+            case "d" -> viewUsers();
+            default -> System.out.println("Invalid operation.");
+        }
+    }
+    public void performTicketOperation(String op, Scanner sc) {
+        switch (op) {
+            case "a" -> insertTicket(sc);
+            case "b" -> updateTicket(sc);
+            case "c" -> deleteTicket(sc);
+            case "d" -> viewTickets();
+            default -> System.out.println("Invalid operation.");
+        }
+    }
+    public void performDepartmentOperation(String op, Scanner sc) {
+        switch (op) {
+            case "a" -> insertDepartment(sc);
+            case "b" -> updateDepartment(sc);
+            case "c" -> deleteDepartment(sc);
+            case "d" -> viewDepartments();
+            default -> System.out.println("Invalid operation.");
+        }
+    }
+    public void performCommentOperation(String op, Scanner sc) {
+        switch (op) {
+            case "a" -> insertTicketComment(sc);
+            case "b" -> updateTicketComment(sc);
+            case "c" -> deleteTicketComment(sc);
+            case "d" -> viewTicketComments();
+            default -> System.out.println("Invalid operation.");
+        }
+    }
+    public void performAssignmentOperation(String op, Scanner sc) {
+        switch (op) {
+            case "a" -> insertTicketAssignment(sc);
+            case "b" -> updateTicketAssignment(sc);
+            case "c" -> deleteTicketAssignment(sc);
+            case "d" -> viewTicketAssignments();
+            default -> System.out.println("Invalid operation.");
+        }
+    }
+    public void insertUser(Scanner sc) {
+        System.out.print("User ID: "); int id = sc.nextInt(); sc.nextLine();
+        System.out.print("Name: "); String name = sc.nextLine();
+        System.out.print("Email: "); String email = sc.nextLine();
+        System.out.print("Role: "); String role = sc.nextLine();
+        String sql = "INSERT INTO users (user_id, name, email, role, created_at) VALUES (?, ?, ?, ?, SYSDATE)";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id); ps.setString(2, name); ps.setString(3, email); ps.setString(4, role);
+            ps.executeUpdate();
+            System.out.println("User inserted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void updateUser(Scanner sc) {
+        System.out.print("User ID to update: "); int id = sc.nextInt(); sc.nextLine();
+        System.out.print("New Name: "); String name = sc.nextLine();
+        System.out.print("New Email: "); String email = sc.nextLine();
+        System.out.print("New Role: "); String role = sc.nextLine();
+        String sql = "UPDATE users SET name = ?, email = ?, role = ? WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name); ps.setString(2, email); ps.setString(3, role); ps.setInt(4, id);
+            ps.executeUpdate();
+            System.out.println("User updated.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void deleteUser(Scanner sc) {
+        System.out.print("User ID to delete: "); int id = sc.nextInt();
+        String sql = "DELETE FROM users WHERE user_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("User deleted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void viewUsers() {
+        String sql = "SELECT * FROM users";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println(rs.getInt(1) + " | " + rs.getString(2) + " | " +
+                        rs.getString(3) + " | " + rs.getString(4) + " | " + rs.getDate(5));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void insertTicket(Scanner sc) {
+        System.out.print("Ticket ID: "); int tid = sc.nextInt();
+        System.out.print("User ID: "); int uid = sc.nextInt(); sc.nextLine();
+        System.out.print("Subject: "); String subject = sc.nextLine();
+        System.out.print("Status: "); String status = sc.nextLine();
+        String sql = "INSERT INTO tickets (ticket_id, user_id, subject, status, created_at) VALUES (?, ?, ?, ?, SYSDATE)";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, tid); ps.setInt(2, uid); ps.setString(3, subject); ps.setString(4, status);
+            ps.executeUpdate();
+            System.out.println("Ticket inserted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void updateTicket(Scanner sc) {
+        System.out.print("Ticket ID to update: "); int tid = sc.nextInt(); sc.nextLine();
+        System.out.print("New Subject: "); String subject = sc.nextLine();
+        System.out.print("New Status: "); String status = sc.nextLine();
+        String sql = "UPDATE tickets SET subject = ?, status = ? WHERE ticket_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, subject); ps.setString(2, status); ps.setInt(3, tid);
+            ps.executeUpdate();
+            System.out.println("Ticket updated.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void deleteTicket(Scanner sc) {
+        System.out.print("Ticket ID to delete: "); int id = sc.nextInt();
+        String sql = "DELETE FROM tickets WHERE ticket_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Ticket deleted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void viewTickets() {
+        String sql = "SELECT * FROM tickets";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println(rs.getInt(1) + " | " + rs.getInt(2) + " | " +
+                        rs.getString(3) + " | " + rs.getString(4) + " | " + rs.getDate(5));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void insertDepartment(Scanner sc) {
+        System.out.print("Dept ID: "); int id = sc.nextInt(); sc.nextLine();
+        System.out.print("Dept Name: "); String name = sc.nextLine();
+        System.out.print("Manager: "); String manager = sc.nextLine();
+        String sql = "INSERT INTO departments (dept_id, dept_name, manager) VALUES (?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id); ps.setString(2, name); ps.setString(3, manager);
+            ps.executeUpdate();
+            System.out.println("Department inserted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void updateDepartment(Scanner sc) {
+        System.out.print("Dept ID to update: "); int id = sc.nextInt(); sc.nextLine();
+        System.out.print("New Dept Name: "); String name = sc.nextLine();
+        System.out.print("New Manager: "); String manager = sc.nextLine();
+        String sql = "UPDATE departments SET dept_name = ?, manager = ? WHERE dept_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name); ps.setString(2, manager); ps.setInt(3, id);
+            ps.executeUpdate();
+            System.out.println("Department updated.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void deleteDepartment(Scanner sc) {
+        System.out.print("Dept ID to delete: "); int id = sc.nextInt();
+        String sql = "DELETE FROM departments WHERE dept_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Department deleted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void viewDepartments() {
+        String sql = "SELECT * FROM departments";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println(rs.getInt(1) + " | " + rs.getString(2) + " | " + rs.getString(3));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void insertTicketComment(Scanner sc) {
+        System.out.print("Comment ID: "); int cid = sc.nextInt();
+        System.out.print("Ticket ID: "); int tid = sc.nextInt();
+        System.out.print("User ID: "); int uid = sc.nextInt(); sc.nextLine();
+        System.out.print("Comment: "); String comment = sc.nextLine();
+        String sql = "INSERT INTO ticket_comments (comment_id, ticket_id, user_id, comment_text, commented_at) VALUES (?, ?, ?, ?, SYSDATE)";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, cid); ps.setInt(2, tid); ps.setInt(3, uid); ps.setString(4, comment);
+            ps.executeUpdate();
+            System.out.println("Comment inserted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void updateTicketComment(Scanner sc) {
+        System.out.print("Comment ID to update: "); int cid = sc.nextInt(); sc.nextLine();
+        System.out.print("New Comment: "); String comment = sc.nextLine();
+        String sql = "UPDATE ticket_comments SET comment_text = ? WHERE comment_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, comment); ps.setInt(2, cid);
+            ps.executeUpdate();
+            System.out.println("Comment updated.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void deleteTicketComment(Scanner sc) {
+        System.out.print("Comment ID to delete: "); int id = sc.nextInt();
+        String sql = "DELETE FROM ticket_comments WHERE comment_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Comment deleted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void viewTicketComments() {
+        String sql = "SELECT * FROM ticket_comments";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println(rs.getInt(1) + " | " + rs.getInt(2) + " | " +
+                        rs.getInt(3) + " | " + rs.getString(4) + " | " + rs.getDate(5));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void insertTicketAssignment(Scanner sc) {
+        System.out.print("Assignment ID: "); int aid = sc.nextInt();
+        System.out.print("Ticket ID: "); int tid = sc.nextInt();
+        System.out.print("Assigned To (User ID): "); int uid = sc.nextInt();
+        String sql = "INSERT INTO ticket_assignments (assignment_id, ticket_id, assigned_to, assigned_at) VALUES (?, ?, ?, SYSDATE)";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, aid); ps.setInt(2, tid); ps.setInt(3, uid);
+            ps.executeUpdate();
+            System.out.println("Assignment inserted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void updateTicketAssignment(Scanner sc) {
+        System.out.print("Assignment ID to update: "); int aid = sc.nextInt();
+        System.out.print("New Assigned To (User ID): "); int uid = sc.nextInt();
+        String sql = "UPDATE ticket_assignments SET assigned_to = ?, assigned_at = SYSDATE WHERE assignment_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, uid); ps.setInt(2, aid);
+            ps.executeUpdate();
+            System.out.println("Assignment updated.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void deleteTicketAssignment(Scanner sc) {
+        System.out.print("Assignment ID to delete: "); int id = sc.nextInt();
+        String sql = "DELETE FROM ticket_assignments WHERE assignment_id = ?";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+            System.out.println("Assignment deleted.");
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    public void viewTicketAssignments() {
+        String sql = "SELECT * FROM ticket_assignments";
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println(rs.getInt(1) + " | " + rs.getInt(2) + " | " +
+                        rs.getInt(3) + " | " + rs.getDate(4));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+}
